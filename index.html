@@ -225,14 +225,26 @@ function rollover(p){
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const speechOK = !!SR;
 
-function sayWord(word){
-  if(!("speechSynthesis" in window)) return;
+function sayWord(word, onend){
+  if(!("speechSynthesis" in window)){ if(onend) onend(); return; }
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(word);
   u.lang = "en-US"; u.rate = 0.8;
   const vs = window.speechSynthesis.getVoices();
   const v = vs.find(v=>v.lang==="en-US") || vs.find(v=>v.lang.startsWith("en"));
   if(v) u.voice = v;
+  if(onend){
+    let fired=false;
+    const fin=()=>{ if(fired) return; fired=true; onend(); };
+    u.onend=fin; u.onerror=fin;
+    /* fallback in case onend never fires: poll until speech is done */
+    const t0=Date.now();
+    const poll=setInterval(()=>{
+      if(fired || (!window.speechSynthesis.speaking && !window.speechSynthesis.pending && Date.now()-t0>600) || Date.now()-t0>8000){
+        clearInterval(poll); fin();
+      }
+    },250);
+  }
   window.speechSynthesis.speak(u);
 }
 if("speechSynthesis" in window) window.speechSynthesis.getVoices();
@@ -367,6 +379,7 @@ function runLearn(p, k){
   const ids=p.introducedToday;
   if(k>=ids.length){ setPhase(p,"final"); runFinal(p); return; }
   const idx=ids[k], [en,he]=WORDS[idx], emo=EMOJI[en];
+  stopActiveRec();
   stage.innerHTML="";
   const c=el("div","card");
   c.appendChild(el("div","progress-pips",ids.map((_,i)=>i<k?"🟣":(i===k?"🟡":"⚪")).join(" ")));
@@ -379,6 +392,7 @@ function runLearn(p, k){
   hear.onclick=()=>sayWord(en);
   row.appendChild(hear);
   const fb=el("div","feedback");
+  let autoListen=null;
   if(speechOK){
     const mic=el("button","big btn-speak","🎤 אמרי");
     mic.onclick=()=>listenWord(en,mic,fb,()=>{
@@ -389,6 +403,8 @@ function runLearn(p, k){
       r3.classList.add("next-row"); c.appendChild(r3);
     });
     row.appendChild(mic);
+    /* after the word is read aloud, open the mic on its own (button stays as fallback) */
+    autoListen=()=>{ if(mic.isConnected && !mic.classList.contains("listening")) mic.click(); };
   }
   c.appendChild(row); c.appendChild(fb);
   if(!speechOK){
@@ -413,7 +429,7 @@ function runLearn(p, k){
     okRow.appendChild(ok); c.appendChild(okRow);
   }
   stage.appendChild(c);
-  sayWord(en);
+  sayWord(en, autoListen);
 }
 
 /* --- Phase 3: final mixed review --- */
@@ -555,14 +571,18 @@ function quizFlow(p, items, opts){
 }
 
 /* ================= Pronunciation listening ================= */
+let activeRec=null;
+function stopActiveRec(){ if(activeRec){ const r=activeRec; activeRec=null; try{ r.abort(); }catch(e){} } }
 function listenWord(en, btn, fb, onGood){
+  stopActiveRec();
   let rec;
   try{ rec=new SR(); }catch(e){ fb.textContent="לא הצלחתי להפעיל את המיקרופון 😕"; fb.className="feedback try"; return; }
+  activeRec=rec;
   rec.lang="en-US"; rec.interimResults=false; rec.maxAlternatives=5;
   btn.classList.add("listening"); btn.innerHTML="👂 מקשיבה...";
   fb.textContent="";
   let settled=false;
-  const stop=()=>{ btn.classList.remove("listening"); btn.innerHTML="🎤 אמרי"; };
+  const stop=()=>{ if(activeRec===rec) activeRec=null; btn.classList.remove("listening"); btn.innerHTML="🎤 אמרי"; };
   rec.onresult=(ev)=>{
     settled=true; stop();
     const alts=[];
