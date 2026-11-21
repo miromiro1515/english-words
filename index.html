@@ -459,6 +459,10 @@ function makeQuestion(idx){
   return {type:"he", idx};
 }
 
+function distractorPool(p, fullPool){
+  const learned=fullPool.filter(i=>i<p.learned);
+  return learned.length>=5 ? learned : fullPool;
+}
 function pickDistractors(pool, excludeKey, n, keyFn){
   const cands=shuffle(pool.filter(k=>k!==excludeKey));
   return cands.slice(0,n);
@@ -492,7 +496,7 @@ function quizFlow(p, items, opts){
       const hear=el("button","big btn-hear","🔊 שמעי"); hear.onclick=()=>sayWord(en);
       const hr=el("div","btn-row"); hr.appendChild(hear); c.appendChild(hr);
       correctKey=idx;
-      const ds=pickDistractors(emojiPool, idx, 3);
+      const ds=pickDistractors(distractorPool(p,emojiPool), idx, 3);
       shuffle([idx,...ds]).forEach(i=>{
         const b=el("button","opt pic",EMOJI[WORDS[i][0]]);
         b.dataset.k=i;
@@ -503,7 +507,7 @@ function quizFlow(p, items, opts){
       c.appendChild(el("div","phase-sub","איזו מילה מתאימה לתמונה?"));
       c.appendChild(el("div","prompt-emoji",emo));
       correctKey=idx;
-      const ds=pickDistractors(emojiPool, idx, 3);
+      const ds=pickDistractors(distractorPool(p,emojiPool), idx, 3);
       shuffle([idx,...ds]).forEach(i=>{
         const b=el("button","opt");
         b.innerHTML=wordHtml(WORDS[i][0]);
@@ -516,7 +520,7 @@ function quizFlow(p, items, opts){
       const hear=el("button","big btn-hear","🔊 שמעי"); hear.onclick=()=>sayWord(en);
       const hr=el("div","btn-row"); hr.appendChild(hear); c.appendChild(hr);
       correctKey=idx;
-      const ds=pickDistractors(rangeArr(0,WORDS.length), idx, 3);
+      const ds=pickDistractors(distractorPool(p,rangeArr(0,WORDS.length)), idx, 3);
       shuffle([idx,...ds]).forEach(i=>{
         const b=el("button","opt",WORDS[i][1]);
         b.dataset.k=i;
