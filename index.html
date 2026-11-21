@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>מילים באנגלית - English Words</title>
+<style>
+  :root{
+    --bg1:#fde7f3; --bg2:#e0f2fe; --card:#ffffff;
+    --pink:#ec4899; --purple:#8b5cf6; --blue:#3b82f6; --green:#22c55e; --amber:#f59e0b;
+    --ink:#3b2f52;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0; min-height:100vh;
+    font-family:"Segoe UI","Heebo","Arial Hebrew",Arial,sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    color:var(--ink); padding:14px;
+  }
+  .wrap{max-width:560px; margin:0 auto;}
+  header{text-align:center; padding:10px 6px 4px;}
+  header h1{font-size:1.6rem; margin:0 0 2px; color:var(--purple);}
+  .stars-line{font-size:1.05rem; margin:4px 0;}
+  .switch{background:none;border:none;color:#a39bc9;font-size:.85rem;cursor:pointer;font-family:inherit;text-decoration:underline;}
+  .stage{margin-top:8px;}
+  .card{
+    background:var(--card); border-radius:26px;
+    box-shadow:0 8px 24px rgba(139,92,246,.14);
+    padding:22px 16px; margin:0 0 16px; text-align:center; position:relative;
+  }
+  .phase-title{font-size:1.3rem; font-weight:800; color:var(--pink); margin:6px 0 2px;}
+  .phase-sub{opacity:.75; margin-bottom:12px; font-size:1rem;}
+  .prompt-emoji{font-size:4.2rem; line-height:1.15; margin:6px 0;}
+  .word-en{direction:ltr; font-size:2rem; font-weight:800; letter-spacing:.5px; margin:2px 0;}
+  .word-en .lower{font-weight:500; color:var(--purple); font-size:1.4rem; margin-left:10px;}
+  .word-he{font-size:1.25rem; color:#6b6390; margin-bottom:12px;}
+  .opts{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px;}
+  .opt{
+    border:none; cursor:pointer; font-family:inherit;
+    background:#f6f3ff; border-radius:20px; padding:14px 8px;
+    font-size:1.15rem; font-weight:700; color:var(--ink);
+    min-height:64px; box-shadow:0 3px 0 rgba(139,92,246,.18);
+    transition:transform .1s;
+  }
+  .opt:active{transform:scale(.95);}
+  .opt.pic{font-size:2.6rem; line-height:1;}
+  .opt .lower{display:block; font-weight:500; font-size:.95rem; color:var(--purple); direction:ltr;}
+  .opt .upper{direction:ltr; display:block;}
+  .opt.wrong{opacity:.35; pointer-events:none; animation:shake .35s;}
+  .opt.right{background:#dcfce7; outline:3px solid var(--green);}
+  @keyframes shake{25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+  button.big{
+    border:none; cursor:pointer; font-family:inherit; font-size:1.15rem; font-weight:700;
+    border-radius:999px; padding:13px 24px; min-width:120px; min-height:54px;
+    color:#fff; box-shadow:0 4px 0 rgba(0,0,0,.12); transition:transform .1s;
+  }
+  button.big:active{transform:scale(.95);}
+  .btn-hear{background:var(--blue);}
+  .btn-speak{background:var(--pink);}
+  .btn-speak.listening{background:var(--amber); animation:pulse 1s infinite;}
+  @keyframes pulse{50%{transform:scale(1.06);}}
+  .btn-ok{background:var(--green);}
+  .btn-next{background:var(--purple);}
+  .btn-row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px;}
+  .feedback{min-height:1.7em; margin-top:12px; font-size:1.2rem; font-weight:700;}
+  .feedback.good{color:var(--green);}
+  .feedback.try{color:#d97706;}
+  .note{background:#fff8e1; border-radius:16px; padding:10px 14px; font-size:.95rem; margin-top:12px; color:#7a5c00;}
+  .confetti{position:fixed; pointer-events:none; font-size:1.6rem; z-index:50; animation:fall 1.4s ease-in forwards;}
+  @keyframes fall{0%{transform:translateY(-10px) rotate(0); opacity:1;} 100%{transform:translateY(70vh) rotate(320deg); opacity:0;}}
+  .name-input{
+    font-family:inherit; font-size:1.3rem; text-align:center;
+    padding:12px 16px; border-radius:16px; border:2px solid #d9d0f7; width:80%;
+  }
+  .progress-pips{text-align:center; font-size:1rem; letter-spacing:3px; margin-bottom:8px;}
+  .done-emoji{font-size:4rem; text-align:center;}
+  footer{margin-top:22px; text-align:center;}
+  details{background:var(--card); border-radius:18px; padding:12px 16px; text-align:right; box-shadow:0 4px 14px rgba(139,92,246,.10); margin-top:10px;}
+  summary{cursor:pointer; font-weight:700; color:var(--purple);}
+  .mini-word{display:flex; justify-content:space-between; align-items:center; padding:5px 2px; font-size:1.02rem; border-bottom:1px dashed #e5defc;}
+  .mini-word b{direction:ltr;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="greet">🌟 מילים באנגלית 🌟</h1>
+    <div class="stars-line" id="starsLine"></div>
+    <button class="switch hidden" id="switchKid">לא את/ה? החלפת ילד</button>
+  </header>
+  <main class="stage" id="stage"></main>
+  <footer>
+    <details id="wordsDetails" class="hidden">
+      <summary>📖 המילים שלי</summary>
+      <div id="allWords"></div>
+    </details>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* ================= Word list: [english, hebrew] =================
+   The first STARTER_COUNT words are the fixed starter set. */
+const WORDS = [
+["girl","ילדה"],["boy","ילד"],["dog","כלב"],["cat","חתול"],["sun","שמש"],
+["water","מים"],["apple","תפוח"],["house","בית"],["mom","אמא"],["dad","אבא"],
+["hello","שלום"],["goodbye","להתראות"],["yes","כן"],["no","לא"],["please","בבקשה"],
+["thanks","תודה"],["family","משפחה"],["friend","חבר"],["school","בית ספר"],["book","ספר"],
+["food","אוכל"],["moon","ירח"],["star","כוכב"],["day","יום"],["night","לילה"],
+["baby","תינוק"],["man","איש"],["woman","אישה"],["name","שם"],["hand","יד"],
+["leg","רגל"],["eye","עין"],["ear","אוזן"],["mouth","פה"],["nose","אף"],
+["head","ראש"],["hair","שיער"],["face","פנים"],["red","אדום"],["blue","כחול"],
+["green","ירוק"],["yellow","צהוב"],["black","שחור"],["white","לבן"],["pink","ורוד"],
+["orange","כתום"],["purple","סגול"],["brown","חום"],["gray","אפור"],["one","אחד"],
+["two","שתיים"],["three","שלוש"],["four","ארבע"],["five","חמש"],["six","שש"],
+["seven","שבע"],["eight","שמונה"],["nine","תשע"],["ten","עשר"],["banana","בננה"],
+["bread","לחם"],["milk","חלב"],["cheese","גבינה"],["egg","ביצה"],["rice","אורז"],
+["cake","עוגה"],["sugar","סוכר"],["salt","מלח"],["juice","מיץ"],["meat","בשר"],
+["fish","דג"],["chicken","עוף"],["soup","מרק"],["cookie","עוגייה"],["candy","ממתק"],
+["ice cream","גלידה"],["pizza","פיצה"],["table","שולחן"],["chair","כיסא"],["bed","מיטה"],
+["door","דלת"],["window","חלון"],["room","חדר"],["kitchen","מטבח"],["bathroom","חדר אמבטיה"],
+["TV","טלוויזיה"],["phone","טלפון"],["computer","מחשב"],["pen","עט"],["pencil","עיפרון"],
+["notebook","מחברת"],["bag","תיק"],["box","קופסה"],["clock","שעון"],["car","אוטו"],
+["bus","אוטובוס"],["train","רכבת"],["plane","מטוס"],["boat","סירה"],["bike","אופניים"],
+["horse","סוס"],["cow","פרה"],["sheep","כבשה"],["goat","עז"],["pig","חזיר"],
+["duck","ברווז"],["rabbit","ארנב"],["mouse","עכבר"],["bird","ציפור"],["lion","אריה"],
+["tiger","נמר"],["elephant","פיל"],["monkey","קוף"],["bear","דוב"],["snake","נחש"],
+["turtle","צב"],["frog","צפרדע"],["butterfly","פרפר"],["bee","דבורה"],["ant","נמלה"],
+["flower","פרח"],["tree","עץ"],["grass","דשא"],["leaf","עלה"],["rain","גשם"],
+["snow","שלג"],["wind","רוח"],["cloud","ענן"],["sky","שמיים"],["sea","ים"],
+["river","נהר"],["mountain","הר"],["beach","חוף"],["park","פארק"],["garden","גן"],
+["city","עיר"],["street","רחוב"],["store","חנות"],["market","שוק"],["hospital","בית חולים"],
+["doctor","רופא"],["teacher","מורה"],["student","תלמיד"],["police","שוטר"],["firefighter","כבאי"],
+["farmer","חקלאי"],["king","מלך"],["queen","מלכה"],["happy","שמח"],["sad","עצוב"],
+["angry","כועס"],["tired","עייף"],["hungry","רעב"],["thirsty","צמא"],["hot","חם"],
+["cold","קר"],["big","גדול"],["small","קטן"],["long","ארוך"],["short","קצר"],
+["tall","גבוה"],["fast","מהר"],["slow","לאט"],["good","טוב"],["bad","רע"],
+["new","חדש"],["old","ישן"],["clean","נקי"],["dirty","מלוכלך"],["easy","קל"],
+["hard","קשה"],["pretty","יפה"],["funny","מצחיק"],["kind","טוב לב"],["strong","חזק"],
+["weak","חלש"],["eat","לאכול"],["drink","לשתות"],["sleep","לישון"],["wake","להתעורר"],
+["run","לרוץ"],["walk","ללכת"],["jump","לקפוץ"],["sit","לשבת"],["stand","לעמוד"],
+["play","לשחק"],["read","לקרוא"],["write","לכתוב"],["draw","לצייר"],["sing","לשיר"],
+["dance","לרקוד"],["swim","לשחות"],["fly","לעוף"],["speak","לדבר"],["listen","להקשיב"],
+["look","להסתכל"],["see","לראות"],["hear","לשמוע"],["touch","לגעת"],["smell","להריח"],
+["open","לפתוח"],["close","לסגור"],["give","לתת"],["take","לקחת"],["come","לבוא"],
+["go","ללכת"],["help","לעזור"],["love","לאהוב"],["like","חובב"],["want","רוצה"],
+["need","צריך"],["know","יודע"],["think","חושב"],["make","לעשות"],["do","לעשות"],
+["say","לומר"],["ask","לשאול"],["answer","לענות"],["learn","ללמוד"],["teach","ללמד"],
+["count","לספור"],["color","לצבוע"],["wash","לשטוף"],["brush","להבריש"],["wear","ללבוש"],
+["shirt","חולצה"],["pants","מכנסיים"],["dress","שמלה"],["skirt","חצאית"],["shoes","נעליים"],
+["socks","גרביים"],["hat","כובע"],["coat","מעיל"],["scarf","צעיף"],["gloves","כפפות"],
+["morning","בוקר"],["afternoon","צהריים"],["evening","ערב"],["today","היום"],["tomorrow","מחר"],
+["yesterday","אתמול"],["week","שבוע"],["month","חודש"],["year","שנה"],["Sunday","יום ראשון"],
+["Monday","יום שני"],["Tuesday","יום שלישי"],["Wednesday","יום רביעי"],["Thursday","יום חמישי"],["Friday","יום שישי"],
+["Saturday","שבת"],["ball","כדור"],["doll","בובה"],["toy","צעצוע"],["game","משחק"],
+["story","סיפור"],["song","שיר"],["movie","סרט"],["picture","תמונה"],["letter","אות"],
+["word","מילה"],["number","מספר"],["question","שאלה"],["gift","מתנה"],["party","מסיבה"],
+["birthday","יום הולדת"],["holiday","חג"],["summer","קיץ"],["winter","חורף"],["spring","אביב"],
+["autumn","סתיו"]
+];
+
+/* ================= Emoji "pictures" (license-clean) ================= */
+const EMOJI = {
+girl:"👧",boy:"👦",dog:"🐶",cat:"🐱",sun:"☀️",water:"💧",apple:"🍎",house:"🏠",mom:"👩",dad:"👨",
+hello:"👋",please:"🙏",thanks:"💐",family:"👨‍👩‍👧‍👦",friend:"🧑‍🤝‍🧑",school:"🏫",book:"📖",food:"🍽️",moon:"🌙",
+star:"⭐",night:"🌃",baby:"👶",man:"🧍‍♂️",woman:"🧍‍♀️",hand:"✋",leg:"🦵",eye:"👁️",ear:"👂",mouth:"👄",
+nose:"👃",hair:"💇",face:"🙂",red:"🔴",blue:"🔵",green:"🟢",yellow:"🟡",black:"⚫",white:"⚪",pink:"🩷",
+orange:"🟠",purple:"🟣",brown:"🟤",gray:"🩶",one:"1️⃣",two:"2️⃣",three:"3️⃣",four:"4️⃣",five:"5️⃣",six:"6️⃣",
+seven:"7️⃣",eight:"8️⃣",nine:"9️⃣",ten:"🔟",banana:"🍌",bread:"🍞",milk:"🥛",cheese:"🧀",egg:"🥚",rice:"🍚",
+cake:"🍰",salt:"🧂",juice:"🧃",meat:"🍖",fish:"🐟",chicken:"🐔",soup:"🍲",cookie:"🍪",candy:"🍬","ice cream":"🍦",
+pizza:"🍕",chair:"🪑",bed:"🛏️",door:"🚪",window:"🪟",kitchen:"🍳",bathroom:"🛁",TV:"📺",phone:"📱",computer:"💻",
+pen:"🖊️",pencil:"✏️",notebook:"📓",bag:"🎒",box:"📦",clock:"🕐",car:"🚗",bus:"🚌",train:"🚆",plane:"✈️",
+boat:"⛵",bike:"🚲",horse:"🐴",cow:"🐮",sheep:"🐑",goat:"🐐",pig:"🐷",duck:"🦆",rabbit:"🐰",mouse:"🐭",
+bird:"🐦",lion:"🦁",tiger:"🐯",elephant:"🐘",monkey:"🐵",bear:"🐻",snake:"🐍",turtle:"🐢",frog:"🐸",butterfly:"🦋",
+bee:"🐝",ant:"🐜",flower:"🌸",tree:"🌳",grass:"🌱",leaf:"🍃",rain:"🌧️",snow:"❄️",wind:"💨",cloud:"☁️",
+sky:"🌤️",sea:"🌊",mountain:"⛰️",beach:"🏖️",park:"🛝",garden:"🌷",city:"🏙️",street:"🛣️",store:"🏪",market:"🛒",
+hospital:"🏥",doctor:"👨‍⚕️",teacher:"👩‍🏫",police:"👮",firefighter:"🧑‍🚒",farmer:"🧑‍🌾",king:"🤴",queen:"👸",happy:"😊",sad:"😢",
+angry:"😠",tired:"🥱",hungry:"🤤",hot:"🥵",cold:"🥶",long:"📏",fast:"⚡",slow:"🐌",new:"✨",old:"👴",
+funny:"😂",strong:"💪",kind:"💖",eat:"😋",drink:"🥤",sleep:"😴",wake:"⏰",run:"🏃",walk:"🚶",jump:"🦘",
+sit:"🧎",stand:"🧍",write:"✍️",draw:"🖍️",sing:"🎤",dance:"💃",swim:"🏊",fly:"🪁",speak:"🗣️",listen:"🎧",
+look:"👀",touch:"👆",open:"🔓",close:"🔒",give:"🤲",help:"🆘",love:"❤️",like:"👍",want:"🙋",know:"🧠",
+think:"🤔",make:"🛠️",learn:"🎓",count:"🧮",color:"🌈",wash:"🧼",brush:"🪥",shirt:"👕",pants:"👖",dress:"👗",
+shoes:"👟",socks:"🧦",hat:"🎩",coat:"🧥",scarf:"🧣",gloves:"🧤",morning:"🌅",evening:"🌆",day:"📅",week:"🗓️",
+ball:"⚽",doll:"🪆",toy:"🧸",game:"🎮",story:"🧚",song:"🎵",movie:"🎬",picture:"🖼️",letter:"🔤",word:"🔡",
+number:"🔢",question:"❓",gift:"🎁",party:"🎉",birthday:"🎂",holiday:"🎆",winter:"⛄",spring:"🌼",autumn:"🍂",summer:"🌞"
+};
+
+const STARTER_COUNT = 10;
+const NEW_PER_DAY = 2;
+const WARM_Q = 4;     /* warm-up review questions */
+const FINAL_OLD_Q = 4;/* old words mixed into the final review */
+
+/* ================= State: per-name profiles ================= */
+const KEY = "englishWordsV2";
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function loadAll(){ try{ return JSON.parse(localStorage.getItem(KEY))||{profiles:{},current:null}; }catch(e){ return {profiles:{},current:null}; } }
+function saveAll(){ localStorage.setItem(KEY, JSON.stringify(DB)); }
+
+let DB = loadAll();
+
+function newProfile(name){
+  return {name:name, learned:STARTER_COUNT, day:todayStr(), stars:0,
+          session:{date:todayStr(), phase:"learn"}, introducedToday:rangeArr(0,STARTER_COUNT)};
+}
+function rangeArr(a,b){ const r=[]; for(let i=a;i<b;i++) r.push(i); return r; }
+
+/* Day rollover: add 1-2 new words, restart the session */
+function rollover(p){
+  if(p.day !== todayStr()){
+    const before = p.learned;
+    p.learned = Math.min(p.learned + NEW_PER_DAY, WORDS.length);
+    p.day = todayStr();
+    p.introducedToday = rangeArr(before, p.learned);
+    p.session = {date:todayStr(), phase:"warm"};
+    saveAll();
+  }
+}
+
+/* ================= Speech ================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const speechOK = !!SR;
+
+function sayWord(word){
+  if(!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = "en-US"; u.rate = 0.8;
+  const vs = window.speechSynthesis.getVoices();
+  const v = vs.find(v=>v.lang==="en-US") || vs.find(v=>v.lang.startsWith("en"));
+  if(v) u.voice = v;
+  window.speechSynthesis.speak(u);
+}
+if("speechSynthesis" in window) window.speechSynthesis.getVoices();
+
+function norm(s){ return (s||"").toLowerCase().replace(/[^a-z ]/g," ").replace(/\s+/g," ").trim(); }
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+  const dp=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return dp[m][n];
+}
+function matchesTarget(heard,target){
+  heard=norm(heard); target=norm(target);
+  if(!heard||!target) return false;
+  if(heard===target) return true;
+  const parts=target.split(" ");
+  if(parts.length>1){
+    let idx=0;
+    for(const pt of parts){ const f=heard.indexOf(pt,idx); if(f===-1) return false; idx=f+pt.length; }
+    return true;
+  }
+  for(const w of heard.split(" ")){
+    if(w===target) return true;
+    if(target.length>=4 && lev(w,target)<=1) return true;
+  }
+  return false;
+}
+
+/* ================= Praise & confetti ================= */
+const PRAISE=["כל הכבוד! 🌟","מדהים! 🎉","וואו, נהדר! ⭐","בדיוק ככה! 💪","את אלופה! 🏆","מושלם! 🌈","יש! עוד כוכב! ✨"];
+const TRY_AGAIN=["כמעט! נסי שוב 💪","עוד פעם, את יכולה! 🌸","לא נורא, ננסה שוב 😊"];
+const praise=()=>PRAISE[Math.floor(Math.random()*PRAISE.length)];
+const tryMsg=()=>TRY_AGAIN[Math.floor(Math.random()*TRY_AGAIN.length)];
+function confetti(){
+  const e=["🎉","⭐","🌟","🎈","🌈","💖"];
+  for(let i=0;i<18;i++){
+    const s=document.createElement("span");
+    s.className="confetti"; s.textContent=e[Math.floor(Math.random()*e.length)];
+    s.style.left=Math.random()*100+"vw"; s.style.top="-20px";
+    s.style.animationDelay=(Math.random()*0.5)+"s";
+    document.body.appendChild(s); setTimeout(()=>s.remove(),2200);
+  }
+}
+
+/* ================= Helpers ================= */
+const stage=document.getElementById("stage");
+function el(tag,cls,html){ const d=document.createElement(tag); if(cls)d.className=cls; if(html!=null)d.innerHTML=html; return d; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function wordHtml(w){ return "<span class='upper'>"+w.toUpperCase()+"</span><span class='lower'>"+w.toLowerCase()+"</span>"; }
+
+const emojiPool = WORDS.map((w,i)=>i).filter(i=>EMOJI[WORDS[i][0]]);
+
+function currentProfile(){ return DB.current ? DB.profiles[DB.current] : null; }
+
+function renderHeader(){
+  const p=currentProfile();
+  document.getElementById("greet").textContent = p ? "שלום "+p.name+"! 🌷" : "🌟 מילים באנגלית 🌟";
+  document.getElementById("starsLine").textContent = p ? "⭐ "+p.stars+" כוכבים · "+p.learned+" מילים" : "";
+  document.getElementById("switchKid").classList.toggle("hidden", !p);
+  document.getElementById("wordsDetails").classList.toggle("hidden", !p);
+}
+
+/* ================= Screens ================= */
+function showNameScreen(){
+  renderHeader();
+  stage.innerHTML="";
+  const c=el("div","card");
+  c.appendChild(el("div","phase-title","מי משחקת היום? 🦄"));
+  c.appendChild(el("div","phase-sub","כתבי את השם שלך כדי שנזכור את ההתקדמות שלך"));
+  const inp=el("input","name-input"); inp.placeholder="השם שלי..."; inp.maxLength=20;
+  c.appendChild(inp);
+  const row=el("div","btn-row");
+  const go=el("button","big btn-next","בואי נתחיל! 🚀");
+  const start=()=>{
+    const name=inp.value.trim();
+    if(!name){ inp.focus(); return; }
+    if(!DB.profiles[name]) DB.profiles[name]=newProfile(name);
+    DB.current=name; saveAll();
+    startSession();
+  };
+  go.onclick=start;
+  inp.onkeydown=(e)=>{ if(e.key==="Enter") start(); };
+  row.appendChild(go); c.appendChild(row);
+
+  const names=Object.keys(DB.profiles);
+  if(names.length){
+    c.appendChild(el("div","phase-sub","או המשיכי עם:"));
+    const r2=el("div","btn-row");
+    names.forEach(n=>{
+      const b=el("button","big btn-hear",n);
+      b.onclick=()=>{ DB.current=n; saveAll(); startSession(); };
+      r2.appendChild(b);
+    });
+    c.appendChild(r2);
+  }
+  stage.appendChild(c);
+  inp.focus();
+}
+
+function startSession(){
+  const p=currentProfile();
+  if(!p){ showNameScreen(); return; }
+  rollover(p);
+  renderHeader();
+  renderWordList(p);
+  const ph=p.session.phase;
+  if(ph==="warm") runWarmup(p);
+  else if(ph==="learn") runLearn(p,0);
+  else if(ph==="final") runFinal(p);
+  else showDone(p);
+}
+
+function setPhase(p,phase){ p.session.phase=phase; saveAll(); }
+
+/* --- Phase 1: warm-up review quiz over older words --- */
+function runWarmup(p){
+  const older=rangeArr(0,p.learned).filter(i=>!p.introducedToday.includes(i));
+  const pool=older.length?older:rangeArr(0,p.learned);
+  const qs=shuffle(pool.slice()).slice(0,Math.min(WARM_Q,pool.length));
+  if(!qs.length){ setPhase(p,"learn"); runLearn(p,0); return; }
+  quizFlow(p, qs.map(i=>({idx:i})), {
+    title:"🔁 חזרת בוקר",
+    sub:"קודם נזכר קצת במילים שכבר למדנו",
+    onDone:()=>{ setPhase(p, p.introducedToday.length?"learn":"final"); p.introducedToday.length?runLearn(p,0):runFinal(p); }
+  });
+}
+
+/* --- Phase 2: learn today's new words --- */
+function runLearn(p, k){
+  const ids=p.introducedToday;
+  if(k>=ids.length){ setPhase(p,"final"); runFinal(p); return; }
+  const idx=ids[k], [en,he]=WORDS[idx], emo=EMOJI[en];
+  stage.innerHTML="";
+  const c=el("div","card");
+  c.appendChild(el("div","progress-pips",ids.map((_,i)=>i<k?"🟣":(i===k?"🟡":"⚪")).join(" ")));
+  c.appendChild(el("div","phase-title",(ids.length>STARTER_COUNT?"✨ מילה חדשה":"🌷 בואי נכיר")+" ("+(k+1)+"/"+ids.length+")"));
+  if(emo) c.appendChild(el("div","prompt-emoji",emo));
+  const we=el("div","word-en"); we.innerHTML=wordHtml(en); c.appendChild(we);
+  c.appendChild(el("div","word-he",he));
+  const row=el("div","btn-row");
+  const hear=el("button","big btn-hear","🔊 שמעי");
+  hear.onclick=()=>sayWord(en);
+  row.appendChild(hear);
+  const fb=el("div","feedback");
+  if(speechOK){
+    const mic=el("button","big btn-speak","🎤 אמרי");
+    mic.onclick=()=>listenWord(en,mic,fb,()=>{
+      const nx=el("button","big btn-next", k+1<ids.length?"הבא ⬅️":"לחזרה! 🎯");
+      nx.onclick=()=>runLearn(p,k+1);
+      const r3=el("div","btn-row"); r3.appendChild(nx);
+      c.querySelectorAll(".next-row").forEach(x=>x.remove());
+      r3.classList.add("next-row"); c.appendChild(r3);
+    });
+    row.appendChild(mic);
+  }
+  c.appendChild(row); c.appendChild(fb);
+  if(!speechOK){
+    const note=el("div","note","💡 בדיקת ההגייה האוטומטית לא זמינה בדפדפן הזה (למשל ספארי באייפון). הקשיבי, אמרי את המילה בקול כמה פעמים, ואז לחצי שאמרת אותה.");
+    c.appendChild(note);
+    const okRow=el("div","btn-row");
+    const ok=el("button","big btn-ok","✅ אמרתי את המילה");
+    ok.onclick=()=>{
+      fb.textContent=praise(); fb.className="feedback good"; confetti(); p.stars++; saveAll(); renderHeader();
+      setTimeout(()=>runLearn(p,k+1),900);
+    };
+    okRow.appendChild(ok); c.appendChild(okRow);
+  }else{
+    /* self-check always available too, so a parent can move things along */
+    const okRow=el("div","btn-row");
+    const ok=el("button","big btn-ok","✅ אמרתי נכון");
+    ok.style.fontSize="1rem"; ok.style.padding="10px 18px"; ok.style.minHeight="44px";
+    ok.onclick=()=>{
+      fb.textContent=praise(); fb.className="feedback good"; confetti(); p.stars++; saveAll(); renderHeader();
+      setTimeout(()=>runLearn(p,k+1),900);
+    };
+    okRow.appendChild(ok); c.appendChild(okRow);
+  }
+  stage.appendChild(c);
+  sayWord(en);
+}
+
+/* --- Phase 3: final mixed review --- */
+function runFinal(p){
+  const fresh=p.introducedToday.slice();
+  const older=rangeArr(0,p.learned).filter(i=>!fresh.includes(i));
+  const oldPick=shuffle(older.slice()).slice(0,Math.min(FINAL_OLD_Q,older.length));
+  const qs=shuffle(fresh.map(i=>({idx:i,must:true})).concat(oldPick.map(i=>({idx:i}))));
+  if(!qs.length){ showDone(p); return; }
+  quizFlow(p, qs, {
+    title:"🎯 חזרה משולבת",
+    sub:"בואי נבדוק שאנחנו זוכרות - חדשות וישנות ביחד!",
+    onDone:()=>{ setPhase(p,"done"); showDone(p); }
+  });
+}
+
+/* --- Done screen --- */
+function showDone(p){
+  stage.innerHTML="";
+  const c=el("div","card");
+  c.appendChild(el("div","done-emoji","🏆"));
+  c.appendChild(el("div","phase-title","כל הכבוד, "+p.name+"!"));
+  c.appendChild(el("div","phase-sub","סיימת את התרגול של היום. מחר יחכו לך מילים חדשות! 🌈"));
+  const row=el("div","btn-row");
+  const free=el("button","big btn-hear","🎲 תרגול חופשי");
+  free.onclick=()=>{
+    const ids=shuffle(rangeArr(0,p.learned)).slice(0,Math.min(8,p.learned));
+    quizFlow(p, ids.map(i=>({idx:i})), {title:"🎲 תרגול חופשי", sub:"סתם בשביל הכיף", onDone:()=>showDone(p)});
+  };
+  row.appendChild(free);
+  c.appendChild(row);
+  stage.appendChild(c);
+  confetti();
+}
+
+/* ================= Quiz engine ================= */
+function makeQuestion(idx){
+  const [en,he]=WORDS[idx];
+  const hasPic=!!EMOJI[en];
+  const r=Math.random();
+  if(hasPic && r<0.45) return {type:"pic", idx};
+  if(hasPic && r<0.8) return {type:"word", idx};
+  return {type:"he", idx};
+}
+
+function pickDistractors(pool, excludeKey, n, keyFn){
+  const cands=shuffle(pool.filter(k=>k!==excludeKey));
+  return cands.slice(0,n);
+}
+
+function quizFlow(p, items, opts){
+  /* items: [{idx}] in order; generate question types once */
+  const questions=items.map(it=>makeQuestion(it.idx));
+  let qi=0;
+
+  function next(){
+    if(qi>=questions.length){ opts.onDone(); return; }
+    renderQ(questions[qi]);
+  }
+
+  function renderQ(q){
+    const idx=q.idx, [en,he]=WORDS[idx], emo=EMOJI[en];
+    stage.innerHTML="";
+    const c=el("div","card");
+    c.appendChild(el("div","progress-pips",questions.map((_,i)=>i<qi?"🟣":(i===qi?"🟡":"⚪")).join(" ")));
+    c.appendChild(el("div","phase-title",opts.title));
+    c.appendChild(el("div","phase-sub",opts.sub));
+    const fb=el("div","feedback");
+
+    const optsBox=el("div","opts");
+    let correctKey;
+
+    if(q.type==="pic"){
+      c.appendChild(el("div","phase-sub","איזו תמונה מתאימה למילה?"));
+      const we=el("div","word-en"); we.innerHTML=wordHtml(en); c.appendChild(we);
+      const hear=el("button","big btn-hear","🔊 שמעי"); hear.onclick=()=>sayWord(en);
+      const hr=el("div","btn-row"); hr.appendChild(hear); c.appendChild(hr);
+      correctKey=idx;
+      const ds=pickDistractors(emojiPool, idx, 3);
+      shuffle([idx,...ds]).forEach(i=>{
+        const b=el("button","opt pic",EMOJI[WORDS[i][0]]);
+        b.dataset.k=i;
+        optsBox.appendChild(b);
+      });
+      sayWord(en);
+    }else if(q.type==="word"){
+      c.appendChild(el("div","phase-sub","איזו מילה מתאימה לתמונה?"));
+      c.appendChild(el("div","prompt-emoji",emo));
+      correctKey=idx;
+      const ds=pickDistractors(emojiPool, idx, 3);
+      shuffle([idx,...ds]).forEach(i=>{
+        const b=el("button","opt");
+        b.innerHTML=wordHtml(WORDS[i][0]);
+        b.dataset.k=i;
+        optsBox.appendChild(b);
+      });
+    }else{
+      c.appendChild(el("div","phase-sub","מה המשמעות של המילה?"));
+      const we=el("div","word-en"); we.innerHTML=wordHtml(en); c.appendChild(we);
+      const hear=el("button","big btn-hear","🔊 שמעי"); hear.onclick=()=>sayWord(en);
+      const hr=el("div","btn-row"); hr.appendChild(hear); c.appendChild(hr);
+      correctKey=idx;
+      const ds=pickDistractors(rangeArr(0,WORDS.length), idx, 3);
+      shuffle([idx,...ds]).forEach(i=>{
+        const b=el("button","opt",WORDS[i][1]);
+        b.dataset.k=i;
+        optsBox.appendChild(b);
+      });
+      sayWord(en);
+    }
+
+    c.appendChild(optsBox);
+    c.appendChild(fb);
+    stage.appendChild(c);
+
+    optsBox.querySelectorAll(".opt").forEach(b=>{
+      b.onclick=()=>{
+        const k=parseInt(b.dataset.k,10);
+        if(k===correctKey){
+          b.classList.add("right");
+          fb.textContent=praise(); fb.className="feedback good";
+          confetti(); p.stars++; saveAll(); renderHeader();
+          optsBox.querySelectorAll(".opt").forEach(o=>o.style.pointerEvents="none");
+          qi++;
+          setTimeout(next, 1000);
+        }else{
+          b.classList.add("wrong");
+          fb.textContent=tryMsg(); fb.className="feedback try";
+          if(q.type!=="word") sayWord(en);
+        }
+      };
+    });
+  }
+  next();
+}
+
+/* ================= Pronunciation listening ================= */
+function listenWord(en, btn, fb, onGood){
+  let rec;
+  try{ rec=new SR(); }catch(e){ fb.textContent="לא הצלחתי להפעיל את המיקרופון 😕"; fb.className="feedback try"; return; }
+  rec.lang="en-US"; rec.interimResults=false; rec.maxAlternatives=5;
+  btn.classList.add("listening"); btn.innerHTML="👂 מקשיבה...";
+  fb.textContent="";
+  let settled=false;
+  const stop=()=>{ btn.classList.remove("listening"); btn.innerHTML="🎤 אמרי"; };
+  rec.onresult=(ev)=>{
+    settled=true; stop();
+    const alts=[];
+    for(let i=0;i<ev.results[0].length;i++) alts.push(ev.results[0][i].transcript);
+    if(alts.some(a=>matchesTarget(a,en))){
+      fb.textContent=praise(); fb.className="feedback good";
+      confetti();
+      const p=currentProfile(); p.stars++; saveAll(); renderHeader();
+      if(onGood) onGood();
+    }else{
+      fb.textContent=tryMsg(); fb.className="feedback try";
+      sayWord(en);
+    }
+  };
+  rec.onerror=(ev)=>{
+    if(settled) return; settled=true; stop();
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed")
+      fb.textContent="צריך לאשר גישה למיקרופון 🎤 - לחצי שוב ואשרי.";
+    else if(ev.error==="no-speech")
+      fb.textContent="לא שמעתי... נסי שוב בקול 🎤";
+    else fb.textContent="משהו לא עבד, נסי שוב 😊";
+    fb.className="feedback try";
+  };
+  rec.onend=()=>{ if(!settled){ settled=true; stop(); } };
+  try{ rec.start(); }catch(e){ stop(); }
+}
+
+/* ================= Word list panel ================= */
+function renderWordList(p){
+  const box=document.getElementById("allWords");
+  box.innerHTML="";
+  for(let i=0;i<p.learned;i++){
+    const d=el("div","mini-word");
+    const emo=EMOJI[WORDS[i][0]]||"";
+    d.innerHTML="<b>"+emo+" "+WORDS[i][0].toUpperCase()+" "+WORDS[i][0]+"</b><span>"+WORDS[i][1]+"</span>";
+    box.appendChild(d);
+  }
+}
+
+document.getElementById("switchKid").onclick=()=>{ showNameScreen(); };
+
+/* ================= Go ================= */
+if(DB.current && DB.profiles[DB.current]) startSession();
+else showNameScreen();
+</script>
+</body>
+</html>
