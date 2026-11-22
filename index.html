@@ -377,7 +377,7 @@ function runWarmup(p){
 }
 
 /* --- Phase 2: learn today's new words --- */
-function runLearn(p, k){
+function runLearn(p,k,rep=1){
   const ids=p.introducedToday;
   if(k>=ids.length){ setPhase(p,"final"); runFinal(p); return; }
   const idx=ids[k], [en,he]=WORDS[idx], emo=EMOJI[en];
@@ -386,6 +386,7 @@ function runLearn(p, k){
   const c=el("div","card");
   c.appendChild(el("div","progress-pips",ids.map((_,i)=>i<k?"🟣":(i===k?"🟡":"⚪")).join(" ")));
   c.appendChild(el("div","phase-title",(ids.length>STARTER_COUNT?"✨ מילה חדשה":"🌷 בואי נכיר")+" ("+(k+1)+"/"+ids.length+")"));
+  c.appendChild(el("div","phase-sub","נחזור על המילה 3 פעמים כדי לזכור · חזרה "+rep+"/3"));
   if(emo) c.appendChild(el("div","prompt-emoji",emo));
   const we=el("div","word-en"); we.innerHTML=wordHtml(en); c.appendChild(we);
   c.appendChild(el("div","word-he",he));
@@ -395,41 +396,37 @@ function runLearn(p, k){
   row.appendChild(hear);
   const fb=el("div","feedback");
   let autoListen=null;
+  const advanceAfterSuccess=()=>{
+    c.querySelectorAll("button").forEach(b=>b.disabled=true);
+    setTimeout(()=>{
+      if(rep<3) runLearn(p,k,rep+1);
+      else runLearn(p,k+1,1);
+    },1500);
+  };
   if(speechOK){
     const mic=el("button","big btn-speak","🎤 אמרי");
     mic.onclick=()=>listenWord(en,mic,fb,()=>{
-      const nx=el("button","big btn-next", k+1<ids.length?"הבא ⬅️":"לחזרה! 🎯");
-      nx.onclick=()=>runLearn(p,k+1);
-      const r3=el("div","btn-row"); r3.appendChild(nx);
-      c.querySelectorAll(".next-row").forEach(x=>x.remove());
-      r3.classList.add("next-row"); c.appendChild(r3);
+      fb.textContent += " 🎈 "+rep+"/3";
+      advanceAfterSuccess();
     });
     row.appendChild(mic);
-    /* after the word is read aloud, open the mic on its own (button stays as fallback) */
     autoListen=()=>{ if(mic.isConnected && !mic.classList.contains("listening")) mic.click(); };
   }
   c.appendChild(row); c.appendChild(fb);
   if(!speechOK){
-    const note=el("div","note","💡 בדיקת ההגייה האוטומטית לא זמינה בדפדפן הזה (למשל ספארי באייפון). הקשיבי, אמרי את המילה בקול כמה פעמים, ואז לחצי שאמרת אותה.");
+    const note=el("div","note","💡 הקשיבי ואמרי את המילה בקול. נחזור עליה שלוש פעמים כדי לזכור.");
     c.appendChild(note);
-    const okRow=el("div","btn-row");
-    const ok=el("button","big btn-ok","✅ אמרתי את המילה");
-    ok.onclick=()=>{
-      fb.textContent=praise(); fb.className="feedback good"; confetti(); p.stars++; saveAll(); renderHeader();
-      setTimeout(()=>runLearn(p,k+1),900);
-    };
-    okRow.appendChild(ok); c.appendChild(okRow);
-  }else{
-    /* self-check always available too, so a parent can move things along */
-    const okRow=el("div","btn-row");
-    const ok=el("button","big btn-ok","✅ אמרתי נכון");
-    ok.style.fontSize="1rem"; ok.style.padding="10px 18px"; ok.style.minHeight="44px";
-    ok.onclick=()=>{
-      fb.textContent=praise(); fb.className="feedback good"; confetti(); p.stars++; saveAll(); renderHeader();
-      setTimeout(()=>runLearn(p,k+1),900);
-    };
-    okRow.appendChild(ok); c.appendChild(okRow);
   }
+  const okRow=el("div","btn-row");
+  const ok=el("button","big btn-ok",speechOK?"✅ אמרתי נכון":"✅ אמרתי את המילה");
+  if(speechOK){ ok.style.fontSize="1rem"; ok.style.padding="10px 18px"; ok.style.minHeight="44px"; }
+  ok.onclick=()=>{
+    fb.textContent=praise()+" 🎈 "+rep+"/3";
+    fb.className="feedback good";
+    confetti(); p.stars++; saveAll(); renderHeader();
+    advanceAfterSuccess();
+  };
+  okRow.appendChild(ok); c.appendChild(okRow);
   stage.appendChild(c);
   sayWord(en, autoListen);
 }
