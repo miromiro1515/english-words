@@ -405,7 +405,7 @@ function runWarmup(p){
 }
 
 /* --- Phase 2: learn today's new words --- */
-function runLearn(p,k,rep=1){
+function runLearn(p,k){
   const ids=p.introducedToday;
   if(k>=ids.length){ setPhase(p,"final"); runFinal(p); return; }
   const idx=ids[k], [en,he]=WORDS[idx], emo=EMOJI[en];
@@ -414,7 +414,7 @@ function runLearn(p,k,rep=1){
   const c=el("div","card");
   c.appendChild(el("div","progress-pips",ids.map((_,i)=>i<k?"🟣":(i===k?"🟡":"⚪")).join(" ")));
   c.appendChild(el("div","phase-title",(ids.length>STARTER_COUNT?"✨ מילה חדשה":"🌷 בואי נכיר")+" ("+(k+1)+"/"+ids.length+")"));
-  c.appendChild(el("div","phase-sub","נחזור על המילה 3 פעמים כדי לזכור · חזרה "+rep+"/3"));
+  c.appendChild(el("div","phase-sub","אומרים את המילה פעם אחת כדי לזכור"));
   if(emo) c.appendChild(el("div","prompt-emoji",emo));
   const we=el("div","word-en"); we.innerHTML=wordHtml(en); c.appendChild(we);
   c.appendChild(el("div","word-he",he));
@@ -431,14 +431,12 @@ function runLearn(p,k,rep=1){
     stopActiveRec();
     c.querySelectorAll("button").forEach(b=>b.disabled=true);
     setTimeout(()=>{
-      if(rep<3) runLearn(p,k,rep+1);
-      else runLearn(p,k+1,1);
+      runLearn(p,k+1);
     },1500);
   };
   if(speechOK){
     const mic=el("button","big btn-speak","🎤 אמרי");
     mic.onclick=()=>listenWord(en,mic,fb,()=>{
-      fb.insertBefore(document.createTextNode(" "+rep+"/3"),fb.firstChild);
       advanceAfterSuccess();
     });
     row.appendChild(mic);
@@ -446,14 +444,14 @@ function runLearn(p,k,rep=1){
   }
   c.appendChild(row); c.appendChild(fb);
   if(!speechOK){
-    const note=el("div","note","💡 הקשיבי ואמרי את המילה בקול. נחזור עליה שלוש פעמים כדי לזכור.");
+    const note=el("div","note","💡 הקשיבי ואמרי את המילה בקול פעם אחת.");
     c.appendChild(note);
   }
   const okRow=el("div","btn-row");
   const ok=el("button","big btn-ok",speechOK?"✅ אמרתי נכון":"✅ אמרתי את המילה");
   if(speechOK){ ok.style.fontSize="1rem"; ok.style.padding="10px 18px"; ok.style.minHeight="44px"; }
   ok.onclick=()=>{
-    fb.textContent=praise()+" "+rep+"/3";
+    fb.textContent=praise();
     fb.className="feedback good";
     celebrate(fb); p.stars++; saveAll(); renderHeader();
     advanceAfterSuccess();
@@ -660,4 +658,4 @@ else showNameScreen();
 </script>
   <div id="visits" style="display:flex;justify-content:center;margin-top:12px;opacity:.75;"><img src="https://visitor-badge.laobi.icu/badge?page_id=miromiro1515.english-words&amp;left_text=%D7%91%D7%99%D7%A7%D7%95%D7%A8%D7%99%D7%9D" alt="מספר הביקורים" loading="lazy" onerror="this.parentNode.style.display='none'"></div></div>
 </body>
-</html>
+      </html>
