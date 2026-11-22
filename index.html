@@ -396,7 +396,11 @@ function runLearn(p,k,rep=1){
   row.appendChild(hear);
   const fb=el("div","feedback");
   let autoListen=null;
+  let successQueued=false;
   const advanceAfterSuccess=()=>{
+    if(successQueued) return;
+    successQueued=true;
+    stopActiveRec();
     c.querySelectorAll("button").forEach(b=>b.disabled=true);
     setTimeout(()=>{
       if(rep<3) runLearn(p,k,rep+1);
